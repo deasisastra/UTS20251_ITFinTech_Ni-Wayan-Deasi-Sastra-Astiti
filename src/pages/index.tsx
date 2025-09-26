@@ -578,7 +578,7 @@ export default function FoodStore() {
 
           <button 
             onClick={() => {
-              alert('Payment processing... This would integrate with Xendit payment gateway!')
+              alert('Payment processing...')
               setCart([])
               setCurrentPage('products')
             }}
