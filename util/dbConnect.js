@@ -20,6 +20,10 @@ if (!cached) {
 }
 
 async function dbConnect() {
+  // Avoid Mongoose strictQuery deprecation warning
+  // Set to true to keep the current behavior and silence the warning.
+  mongoose.set("strictQuery", true);
+
   if (cached.conn) {
     return cached.conn;
   }
@@ -33,13 +37,12 @@ async function dbConnect() {
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      console.log("Connected to MongoDB");
       return mongoose;
     });
   }
   cached.conn = await cached.promise;
   return cached.conn;
 }
-
-console.log("Connected to MongoDB");
 
 export default dbConnect;
