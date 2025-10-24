@@ -16,10 +16,27 @@ const handler = async (req, res) => {
 
   if (method === "POST") {
     try {
+      // Validate required fields
+      if (!req.body.img) {
+        return res.status(400).json({ error: "Image URL is required" });
+      }
+      
       const newProduct = await Product.create(req.body);
       res.status(201).json(newProduct);
     } catch (err) {
-      console.log(err);
+      console.error(err);
+      // Send validation errors to client
+      if (err.name === 'ValidationError') {
+        return res.status(400).json({ 
+          error: "Validation failed",
+          details: Object.keys(err.errors).reduce((acc, key) => {
+            acc[key] = err.errors[key].message;
+            return acc;
+          }, {})
+        });
+      }
+      // Generic error
+      res.status(500).json({ error: "Failed to create product" });
     }
   }
 };

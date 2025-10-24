@@ -77,20 +77,43 @@ const AddProduct = ({ setIsProductModal, getProducts, product, setEditingProduct
   };
 
   const handleCreate = async () => {
-    setBtnDisabled(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "food-ordering");
-
     try {
+      setBtnDisabled(true);
+      
+      // Validate required fields before proceeding
+      if (!title || !desc || !category || !prices || prices.length === 0) {
+        toast.error("Please fill in all required fields");
+        setBtnDisabled(false);
+        return;
+      }
+
+      // Handle image upload first
       let imgUrl = imageUrl;
       if (file) {
-        const uploadRes = await axios.post(
-          "https://api.cloudinary.com/v1_1/dp5whpvw0/image/upload",
-          formData
-        );
-        imgUrl = uploadRes.data.url;
-        setImageUrl(imgUrl);
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", "food-ordering");
+
+        try {
+          const uploadRes = await axios.post(
+            "https://api.cloudinary.com/v1_1/dp5whpvw0/image/upload",
+            formData
+          );
+          imgUrl = uploadRes.data.url;
+          setImageUrl(imgUrl);
+        } catch (uploadError) {
+          console.error("Image upload failed:", uploadError);
+          toast.error("Failed to upload image. Please try again.");
+          setBtnDisabled(false);
+          return;
+        }
+      }
+
+      // Validate image URL exists
+      if (!imgUrl) {
+        toast.error("Please select an image");
+        setBtnDisabled(false);
+        return;
       }
 
       const payload = {
@@ -128,7 +151,17 @@ const AddProduct = ({ setIsProductModal, getProducts, product, setEditingProduct
         }
       }
     } catch (error) {
-      console.log(error);
+      console.error("Product creation failed:", error);
+      
+      // Handle API validation errors
+      if (error.response?.data?.details) {
+        const errors = error.response.data.details;
+        Object.keys(errors).forEach(field => {
+          toast.error(`${field}: ${errors[field]}`);
+        });
+      } else {
+        toast.error(error.response?.data?.error || "Failed to create product");
+      }
     }
     setBtnDisabled(false);
   };
